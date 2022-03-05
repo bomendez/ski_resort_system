@@ -21,7 +21,7 @@ public class MainClient2 {
     public final static int startDayPhase3 = 361;
     public final static int endDayPhase3 = 420;
     public final static int THROUGHPUT = 5;
-    public static long throughputFinal;
+    public static double throughputFinal;
 
     /**
      * sets numThreads to threads / 4
@@ -90,13 +90,17 @@ public class MainClient2 {
         ApiClient apiClient = new ApiClient();
         apiClient.setBasePath(ipAddress);
 
+
+        int numThreadsPhase1 = (int) Math.floor(numThreads/4);
+        int numThreadsPhase3 = (int) Math.floor(numThreads*0.1);
+        CountDownLatch globalLatch = new CountDownLatch(numThreadsPhase1 + numThreads + numThreadsPhase3);
         RequestLog requestLog = new RequestLog();
+
         /**
          * Phase 1 startup
          */
         System.out.println("Phase 1 Startup");
         final long startPhase1 = System.currentTimeMillis();
-        int numThreadsPhase1 = (int) Math.floor(numThreads/4);
         CountDownLatch phase1Latch = new CountDownLatch((int) Math.floor(numThreadsPhase1 * 0.20));
         double numCallsPhase1 = floor((numRuns*0.2)*(numSkiers/numThreadsPhase1));
         int skierIdStartPhase1 = 0;
@@ -105,7 +109,7 @@ public class MainClient2 {
         for (int i = 0; i < numThreadsPhase1; i++) {
             SkierThread2 skierThreadPhase1 = new SkierThread2(i, apiClient, skierIdStartPhase1,
                     skierIdStopPhase1, startDayPhase1, endDayPhase1, numThreadsPhase1, numSkiers, numRuns,
-                    numCallsPhase1, numLifts, phase1Latch, requestLog);
+                    numCallsPhase1, numLifts, phase1Latch, requestLog, globalLatch);
             new Thread(skierThreadPhase1).start();
             skierIdStartPhase1 = skierIdStopPhase1 + 1;
             skierIdStopPhase1 += numSkiers/numThreadsPhase1;
@@ -113,7 +117,6 @@ public class MainClient2 {
 
         final long endPhase1 = System.currentTimeMillis();
         phase1Latch.await();
-        System.out.println("P1 requests" + requestLog.getNumRequests());
 
         /**
          * Phase 2 peak
@@ -128,21 +131,19 @@ public class MainClient2 {
         for (int i = 0; i < numThreads; i++) {
             SkierThread2 skierThreadPhase2 = new SkierThread2(i, apiClient, skierIdStartPhase2,
                     skierIdStopPhase2, startDayPhase2, endDayPhase2, numThreads, numSkiers, numRuns,
-                    numCallsPhase2, numLifts, phase2Latch, requestLog);
+                    numCallsPhase2, numLifts, phase2Latch, requestLog, globalLatch);
             new Thread(skierThreadPhase2).start();
             skierIdStartPhase2 = skierIdStopPhase2 + 1;
             skierIdStopPhase2 += numSkiers/numThreads;
         }
 
         phase2Latch.await();
-        System.out.println("P2 requests" + requestLog.getNumRequests());
-
 
         /**
          * Phase 3 cooldown
          */
         System.out.println("Phase 3 Cooldown");
-        int numThreadsPhase3 = (int) Math.floor(numThreads*0.1);
+
         CountDownLatch phase3Latch = new CountDownLatch(numThreadsPhase3);
         double numCallsPhase3 = floor(numRuns*0.1);
         int skierIdStartPhase3 = 0;
@@ -151,15 +152,17 @@ public class MainClient2 {
         for (int i = 0; i < numThreadsPhase3; i++) {
             SkierThread2 skierThreadPhase3 = new SkierThread2(i, apiClient, skierIdStartPhase3,
                     skierIdStopPhase3, startDayPhase3, endDayPhase3, numThreadsPhase3, numSkiers, numRuns,
-                    numCallsPhase3, numLifts, phase3Latch, requestLog);
+                    numCallsPhase3, numLifts, phase3Latch, requestLog, globalLatch);
             new Thread(skierThreadPhase3).start();
             skierIdStartPhase3 = skierIdStopPhase3 + 1;
             skierIdStopPhase3 += numSkiers/numThreadsPhase3;
 
         }
-        final long endPhase3 = System.currentTimeMillis();
+
         phase3Latch.await();
-        System.out.println("P3 requests" + requestLog.getNumRequests());
+        globalLatch.await();
+        final long endPhase3 = System.currentTimeMillis();
+
         /**
          * Statistics
          */
@@ -167,10 +170,11 @@ public class MainClient2 {
         System.out.println("numThreads " + numThreads);
         System.out.printf("Total Run Time: %s milliseconds%n", totalRunTime);
         System.out.println("Total Number of Requests: " + requestLog.getNumRequests());
-        throughputFinal = requestLog.getNumRequests()/(totalRunTime / 1000);
-        System.out.println("Throughput: " + throughputFinal + " requests/second");
-        List<ApiPerformance> apiPerformanceList = requestLog.getApiPerformanceList();
-        StatisticsGenerator statisticsGenerator = new StatisticsGenerator(apiPerformanceList);
+        double runTimeinSeconds = totalRunTime/1000.000;
+        throughputFinal = requestLog.getNumRequests()/runTimeinSeconds;
+        System.out.println("Throughput: " + String.format("%.0f", throughputFinal) + " requests/second");
+//        List<ApiPerformance> apiPerformanceList = requestLog.getApiPerformanceList();
+//        StatisticsGenerator statisticsGenerator = new StatisticsGenerator(apiPerformanceList);
 //        statisticsGenerator.createCSV();
     }
 

@@ -13,40 +13,41 @@ import java.util.concurrent.ThreadLocalRandom;
 import Utilities.RequestLog;
 
 public class SkierThread2 implements Runnable {
-    public static int threadId;
-    public static ApiClient apiClient;
-    public static Integer skierIdBegin;
-    public static Integer skierIdEnd;
-    public static Integer startTime;
-    public static Integer endTime;
-    public static Integer numThreads;
-    public static Integer numSkiers;
-    public static Integer numRuns;
-    public static double numCalls;
-    public static Integer numLifts;
-    public static Integer timeValue;
-    public static CountDownLatch completed;
-    public static Integer skierID;
-    public static Integer waitTime;
-    public static LiftRide body;
-    public static SkiersApi apiInstance;
-    public static RequestLog requestLog;
-    public static List<ApiPerformance> apiPerformanceList = new ArrayList<>();
+    public int threadId;
+    public ApiClient apiClient;
+    public Integer skierIdBegin;
+    public Integer skierIdEnd;
+    public Integer startTime;
+    public Integer endTime;
+    public Integer numThreads;
+    public Integer numSkiers;
+    public Integer numRuns;
+    public double numCalls;
+    public Integer numLifts;
+    public Integer timeValue;
+    public CountDownLatch completed;
+    public Integer skierID;
+    public Integer waitTime;
+    public LiftRide body;
+    public SkiersApi apiInstance;
+    public RequestLog requestLog;
     public final Integer resortID = 30;
     public final String seasonID = "20";
     public final String dayID = "10";
-    public static int attempts = 0;
+    public int attempts = 0;
     public final int MAX_RETRY = 5;
-    public static int numSuccesses = 0;
-    public static int numFailures = 0;
-    public static int numRequests = 0;
+    public int numSuccesses = 0;
+    public int numFailures = 0;
+    public int numRequests = 0;
+    public CountDownLatch localGlobalLatch;
 
-    public static List<String> RESORTS = new ArrayList<>();
-    public static List<String> SEASON = new ArrayList<>();
+    public List<ApiPerformance> apiPerformanceList = new ArrayList<>();
+    public List<String> RESORTS = new ArrayList<>();
+    public List<String> SEASON = new ArrayList<>();
 
     public SkierThread2(Integer id, ApiClient client, Integer skierIdStart, Integer skierIdStop,
                        Integer start, Integer end, Integer threadCount, Integer skierCount, Integer runCount,
-                       double callCount, Integer liftCount, CountDownLatch latch, RequestLog log) {
+                       double callCount, Integer liftCount, CountDownLatch latch, RequestLog log, CountDownLatch globalLatch) {
         threadId = id;
         apiClient = client;
         skierIdBegin = skierIdStart;
@@ -61,22 +62,24 @@ public class SkierThread2 implements Runnable {
         timeValue = ThreadLocalRandom.current().nextInt(start, end);
         completed = latch;
         requestLog = log;
+        localGlobalLatch = globalLatch;
     }
 
     public void apiCall() {
+        boolean isSuccessful = false;
         while(attempts < MAX_RETRY) {
             ApiPerformance apiPerformance = new ApiPerformance();
-            numRequests++;
             final long startTime = System.currentTimeMillis();
             try {
                 ApiResponse response = apiInstance.writeNewLiftRideWithHttpInfo(body, resortID, seasonID, dayID, skierID);
                 if (String.valueOf(response.getStatusCode()).startsWith("2")) {
-                    numSuccesses++;
-                    attempts = 5;
+                    isSuccessful = true;
+                    break;
                 } else {
                     attempts++;
                 }
             } catch (ApiException e) {
+                System.err.println("Exception when calling SkiersApi#writeNewLiftRide");
                 e.printStackTrace();
             }
             final long endTime = System.currentTimeMillis();
@@ -84,15 +87,14 @@ public class SkierThread2 implements Runnable {
             apiPerformance.setStartTime(startTime);
             apiPerformance.setLatency(latency);
             apiPerformance.setRequestType("POST");
-            if (attempts <= 5) {
+            if (isSuccessful) {
                 apiPerformance.setResponseCode(201);
+                numSuccesses++;
             } else {
                 apiPerformance.setResponseCode(500);
+                numFailures++;
             }
             apiPerformanceList.add(apiPerformance);
-        }
-        if (attempts > 5) {
-            numFailures++;
         }
         attempts = 0;
     }
@@ -107,6 +109,7 @@ public class SkierThread2 implements Runnable {
 
         apiInstance = new SkiersApi(apiClient);
         for (int i=0; i < numCalls; i++) {
+            numRequests++;
             apiCall();
         }
         requestLog.addNumSuccessfulRequests(numSuccesses);
@@ -114,5 +117,6 @@ public class SkierThread2 implements Runnable {
         requestLog.addRequestCount(numRequests);
         requestLog.joinApiPerformanceLists(apiPerformanceList);
         completed.countDown();
+        localGlobalLatch.countDown();
     }
 }
