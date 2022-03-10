@@ -23,29 +23,6 @@ public class RecvMT {
         final Connection connection = factory.newConnection();
         final BlockingQueue buffer = new LinkedBlockingQueue();
 
-//        Runnable runnable = new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//
-//                    final Channel channel = connection.createChannel();
-//                    channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-//                    // max one message per receiver
-//                    channel.basicQos(1);
-//                    System.out.println(" [*] Thread waiting for messages. To exit press CTRL+C");
-//
-//                    DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-//                        String message = new String(delivery.getBody(), "UTF-8");
-//                        channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-//                        System.out.println( "Callback thread ID = " + Thread.currentThread().getId() + " Received '" + message + "'");
-//                    };
-//                    // process messages
-//                    channel.basicConsume(QUEUE_NAME, false, deliverCallback, consumerTag -> { });
-//                } catch (IOException ex) {
-//                    Logger.getLogger(RecvMT.class.getName()).log(Level.SEVERE, null, ex);
-//                }
-//            }
-//        };
         // start threads and block to receive messages
         ExecutorService consumerPool = Executors.newFixedThreadPool(NUM_MESSAGES_PER_THREAD);
         ReceiverThread receiverThread = new ReceiverThread(factory, connection, QUEUE_NAME, buffer);
