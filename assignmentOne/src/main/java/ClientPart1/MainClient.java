@@ -93,7 +93,7 @@ public class MainClient {
         int numThreadsPhase1 = (int) Math.floor(numThreads/4);
         int numThreadsPhase3 = (int) Math.floor(numThreads*0.1);
 //        CountDownLatch globalLatch = new CountDownLatch(numThreadsPhase1 + numThreads + numThreadsPhase3);
-        CountDownLatch globalLatch = new CountDownLatch(1);
+        CountDownLatch globalLatch = new CountDownLatch(32);
         /**
          * Phase 1 startup
          */
@@ -104,7 +104,7 @@ public class MainClient {
         int skierIdStartPhase1 = 0;
         int skierIdStopPhase1 = numSkiers/numThreadsPhase1;
 
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < numThreadsPhase1; i++) {
             SkierThread skierThreadPhase1 = new SkierThread(i, apiClient, skierIdStartPhase1,
                     skierIdStopPhase1, startDayPhase1, endDayPhase1, numThreadsPhase1, numSkiers, numRuns,
                     numCallsPhase1, numLifts, phase1Latch, requestLog, globalLatch);
@@ -112,7 +112,7 @@ public class MainClient {
             skierIdStartPhase1 = skierIdStopPhase1 + 1;
             skierIdStopPhase1 += numSkiers/numThreadsPhase1;
         }
-//
+
 //        phase1Latch.await();
 //
 //

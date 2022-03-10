@@ -1,22 +1,30 @@
-package Servers;
+package Assignment2;
 
 import EndpointClasses.Skiers;
-import EndpointClasses.Status;
 import com.google.gson.Gson;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.AMQP.BasicProperties;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.stream.Collectors;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-@WebServlet(name = "Servers.SkierServlet", value = "/skiers/*")
+@WebServlet(name = "SkierServlet", value = "/skiers/*")
 public class SkierServlet extends HttpServlet {
     private String VERTICAL = "vertical";
     private String[] dayParams = new String[]{"seasons", "days", "skiers"};
     private Gson gson = new Gson();
+
+    private Connection conn;
+    private String requestQueueName = "skiers_queue";
 
     private boolean isUrlValid(String[] urlParts) {
         // Validate the request url path according to the API spec
@@ -40,7 +48,6 @@ public class SkierServlet extends HttpServlet {
             for (int i=0; i < urlParts.length; i++) {
                 if (i % 2 == 1) {
                     try {
-                        System.out.println(urlParts[i] + " int " + Integer.parseInt(urlParts[i]));
                         Integer.parseInt(urlParts[i]);
                     } catch (NumberFormatException ex) {
                         return false;
@@ -54,6 +61,21 @@ public class SkierServlet extends HttpServlet {
             return true;
         }
         return false;
+    }
+
+    // reference from https://docstore.mik.ua/orelly/java-ent/servlet/ch03_03.htm
+    @Override
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("localhost");
+        try {
+            conn = factory.newConnection();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -104,9 +126,6 @@ public class SkierServlet extends HttpServlet {
         PrintWriter out = response.getWriter();
         // retrieve and parse body
 
-
-
-
         // check we have a URL!
         if (urlPath == null || urlPath.isEmpty()) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -129,16 +148,32 @@ public class SkierServlet extends HttpServlet {
                 while ((s = request.getReader().readLine()) != null) {
                     sb.append(s);
                 }
+
                 Skiers skiers = (Skiers) gson.fromJson(sb.toString(), Skiers.class);
                 out.print(gson.toJson(skiers));
+
+                // start rpc client
+                Channel channel = conn.createChannel();
+                channel.queueDeclare(requestQueueName, false, false, false, null);
+                String message = "Skier payload " + gson.toJson(skiers);
+                System.out.println(message);
+                channel.basicPublish("", requestQueueName, null, message.getBytes(StandardCharsets.UTF_8));
+                channel.close();
+                System.out.println(message);
+
+                // end rpc client
+
                 out.flush();
                 System.out.println(skiers);
+            } catch (IOException | TimeoutException ex) { // rpc client
+                Logger.getLogger(SkierServlet.class.getName()).log(Level.SEVERE, null, ex); // end rpc client
             } catch (Exception ex) {
                 ex.printStackTrace();
                 out.flush();
                 System.out.println("Exception");
             }
             System.out.println("created");
+            conn.close();
         }
     }
 
