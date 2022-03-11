@@ -41,10 +41,10 @@ public class ReceiverThread implements Runnable {
                     channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
                     System.out.println("Callback thread ID = " + Thread.currentThread().getId() + " Received '" + message + "'");
                     Skiers skiers = (Skiers) gson.fromJson(message, Skiers.class);
-//                    Integer skierID = skiers.getSkierID();
+                    Integer skierID = skiers.getSkierID();
                     Integer liftID = skiers.getLiftID();
-//                    System.out.println("skierID " + skierID + "liftID " + liftID);
-                    threadMap.put(1, liftID);
+                    System.out.println("skierID " + skierID + "liftID " + liftID);
+                    threadMap.put(skierID, liftID);
                 };
                 // process messages
                 channel.basicConsume(queue_name, false, deliverCallback, consumerTag -> {

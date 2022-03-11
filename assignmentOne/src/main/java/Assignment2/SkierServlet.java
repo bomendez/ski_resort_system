@@ -6,6 +6,8 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.AMQP.BasicProperties;
+import org.apache.commons.pool2.ObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -27,8 +29,8 @@ public class SkierServlet extends HttpServlet {
     private String dayID;
     private Integer skierID;
 
-    private Connection conn;
     private String requestQueueName = "skiers_queue";
+    private ObjectPool<Channel> pool;
 
     private boolean isUrlValid(String[] urlParts) {
         // Validate the request url path according to the API spec
@@ -71,15 +73,7 @@ public class SkierServlet extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("localhost");
-        try {
-            conn = factory.newConnection();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        }
+        pool = new GenericObjectPool<Channel>(new ChannelFactory());
     }
 
     @Override
@@ -160,16 +154,17 @@ public class SkierServlet extends HttpServlet {
                 skiers.setSkierID(skierID);
                 out.print(gson.toJson(skiers));
 
-                // TODO: create channel pool
-                Channel channel = conn.createChannel();
+                // send message to rabbitmq
+                Channel channel = null;
+                channel = pool.borrowObject();
                 channel.queueDeclare(requestQueueName, false, false, false, null);
                 String message = gson.toJson(skiers);
                 System.out.println(message);
                 System.out.println("server skierID " + skiers.getSkierID());
                 channel.basicPublish("", requestQueueName, null, message.getBytes(StandardCharsets.UTF_8));
-                channel.close();
-
-                // end rpc client
+//                channel.close();
+                pool.returnObject(channel);
+                // end channel pool
 
                 out.flush();
                 System.out.println(skiers);
@@ -181,7 +176,7 @@ public class SkierServlet extends HttpServlet {
                 System.out.println("Exception");
             }
             System.out.println("created");
-            conn.close();
+//            conn.close();
         }
     }
 

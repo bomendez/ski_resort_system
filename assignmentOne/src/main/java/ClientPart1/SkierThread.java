@@ -61,8 +61,8 @@ public class SkierThread implements Runnable {
 
     public void apiCall() {
         boolean isSuccessful = false;
-            while(attempts < 1) {
-//        while(attempts < MAX_RETRY) {
+//            while(attempts < 1) {
+        while(attempts < MAX_RETRY) {
             try {
                 ApiResponse response = apiInstance.writeNewLiftRideWithHttpInfo(body, resortID, seasonID, dayID, skierID);
                 if (String.valueOf(response.getStatusCode()).startsWith("2")) {
@@ -94,7 +94,7 @@ public class SkierThread implements Runnable {
         body.setWaitTime(waitTime);
 
         apiInstance = new SkiersApi(apiClient);
-        for (int i=0; i < 1; i++) {
+        for (int i=0; i < numCalls; i++) {
             numRequests++;
             apiCall();
             System.out.println(i);

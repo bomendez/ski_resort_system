@@ -92,8 +92,8 @@ public class MainClient {
         RequestLog requestLog = new RequestLog();
         int numThreadsPhase1 = (int) Math.floor(numThreads/4);
         int numThreadsPhase3 = (int) Math.floor(numThreads*0.1);
-//        CountDownLatch globalLatch = new CountDownLatch(numThreadsPhase1 + numThreads + numThreadsPhase3);
-        CountDownLatch globalLatch = new CountDownLatch(32);
+        CountDownLatch globalLatch = new CountDownLatch(numThreadsPhase1 + numThreads + numThreadsPhase3);
+//        CountDownLatch globalLatch = new CountDownLatch(32);
         /**
          * Phase 1 startup
          */
@@ -113,49 +113,49 @@ public class MainClient {
             skierIdStopPhase1 += numSkiers/numThreadsPhase1;
         }
 
-//        phase1Latch.await();
-//
-//
-//        /**
-//         * Phase 2 peak
-//         */
-//        System.out.println("Phase 2 Peak");
-//        CountDownLatch phase2Latch = new CountDownLatch((int) Math.floor(numThreads * 0.20));
-//        int skierIdStartPhase2 = 0;
-//        int skierIdStopPhase2 = numSkiers/numThreads;
-//        double numCallsPhase2 = floor((numRuns*0.6)*(numSkiers/numThreads));
-//
-//        for (int i = 0; i < numThreads; i++) {
-//            SkierThread skierThreadPhase2 = new SkierThread(i, apiClient, skierIdStartPhase2,
-//                    skierIdStopPhase2, startDayPhase2, endDayPhase2, numThreads, numSkiers, numRuns,
-//                    numCallsPhase2, numLifts, phase2Latch, requestLog, globalLatch);
-//            new Thread(skierThreadPhase2).start();
-//            skierIdStartPhase2 = skierIdStopPhase2 + 1;
-//            skierIdStopPhase2 += numSkiers/numThreads;
-//        }
-//
-//        phase2Latch.await();
-//
-//
-//        /**
-//         * Phase 3 cooldown
-//         */
-//        System.out.println("Phase 3 Cooldown");
-//        CountDownLatch phase3Latch = new CountDownLatch(numThreadsPhase3);
-//        double numCallsPhase3 = floor(numRuns*0.1);
-//        int skierIdStartPhase3 = 0;
-//        int skierIdStopPhase3 = numSkiers/numThreadsPhase3;
-//
-//        for (int i = 0; i < numThreadsPhase3; i++) {
-//            SkierThread skierThreadPhase3 = new SkierThread(i, apiClient, skierIdStartPhase3,
-//                    skierIdStopPhase3, startDayPhase3, endDayPhase3, numThreadsPhase3, numSkiers, numRuns,
-//                    numCallsPhase3, numLifts, phase3Latch, requestLog, globalLatch);
-//            new Thread(skierThreadPhase3).start();
-//            skierIdStartPhase3 = skierIdStopPhase3 + 1;
-//            skierIdStopPhase3 += numSkiers/numThreadsPhase3;
-//        }
-//
-//        phase3Latch.await();
+        phase1Latch.await();
+
+
+        /**
+         * Phase 2 peak
+         */
+        System.out.println("Phase 2 Peak");
+        CountDownLatch phase2Latch = new CountDownLatch((int) Math.floor(numThreads * 0.20));
+        int skierIdStartPhase2 = 0;
+        int skierIdStopPhase2 = numSkiers/numThreads;
+        double numCallsPhase2 = floor((numRuns*0.6)*(numSkiers/numThreads));
+
+        for (int i = 0; i < numThreads; i++) {
+            SkierThread skierThreadPhase2 = new SkierThread(i, apiClient, skierIdStartPhase2,
+                    skierIdStopPhase2, startDayPhase2, endDayPhase2, numThreads, numSkiers, numRuns,
+                    numCallsPhase2, numLifts, phase2Latch, requestLog, globalLatch);
+            new Thread(skierThreadPhase2).start();
+            skierIdStartPhase2 = skierIdStopPhase2 + 1;
+            skierIdStopPhase2 += numSkiers/numThreads;
+        }
+
+        phase2Latch.await();
+
+
+        /**
+         * Phase 3 cooldown
+         */
+        System.out.println("Phase 3 Cooldown");
+        CountDownLatch phase3Latch = new CountDownLatch(numThreadsPhase3);
+        double numCallsPhase3 = floor(numRuns*0.1);
+        int skierIdStartPhase3 = 0;
+        int skierIdStopPhase3 = numSkiers/numThreadsPhase3;
+
+        for (int i = 0; i < numThreadsPhase3; i++) {
+            SkierThread skierThreadPhase3 = new SkierThread(i, apiClient, skierIdStartPhase3,
+                    skierIdStopPhase3, startDayPhase3, endDayPhase3, numThreadsPhase3, numSkiers, numRuns,
+                    numCallsPhase3, numLifts, phase3Latch, requestLog, globalLatch);
+            new Thread(skierThreadPhase3).start();
+            skierIdStartPhase3 = skierIdStopPhase3 + 1;
+            skierIdStopPhase3 += numSkiers/numThreadsPhase3;
+        }
+
+        phase3Latch.await();
         globalLatch.await();
         final long endPhase3 = System.currentTimeMillis();
 
