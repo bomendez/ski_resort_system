@@ -86,6 +86,7 @@ public class SkierThread implements Runnable {
 
     public void run() {
         skierID = ThreadLocalRandom.current().nextInt(skierIdBegin, skierIdEnd);
+        System.out.println("SkierThread skierID: " + skierID);
         waitTime = Integer.valueOf((int) Math.floor(Math.random()*(endTime - startTime + 1) + startTime));
         body = new LiftRide();
         body.setLiftID(numLifts);

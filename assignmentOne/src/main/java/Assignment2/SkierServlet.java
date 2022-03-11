@@ -22,6 +22,10 @@ public class SkierServlet extends HttpServlet {
     private String VERTICAL = "vertical";
     private String[] dayParams = new String[]{"seasons", "days", "skiers"};
     private Gson gson = new Gson();
+    private Integer resortID;
+    private String seasonID;
+    private String dayID;
+    private Integer skierID;
 
     private Connection conn;
     private String requestQueueName = "skiers_queue";
@@ -38,6 +42,7 @@ public class SkierServlet extends HttpServlet {
             }
             try {
                 Integer.parseInt(urlParts[1]);
+                skierID = Integer.valueOf(urlParts[1]);
             } catch (NumberFormatException ex) {
                 return false;
             }
@@ -45,14 +50,13 @@ public class SkierServlet extends HttpServlet {
         }
 
         if (urlParts.length == 8) {
-            for (int i=0; i < urlParts.length; i++) {
-                if (i % 2 == 1) {
-                    try {
-                        Integer.parseInt(urlParts[i]);
-                    } catch (NumberFormatException ex) {
-                        return false;
-                    }
-                }
+            try {
+                resortID = Integer.valueOf(urlParts[1]);
+                seasonID = urlParts[3];
+                dayID = urlParts[5];
+                skierID = Integer.valueOf(urlParts[7]);
+            } catch (NumberFormatException ex) {
+                return false;
             }
             if (!(urlParts[2].equals(dayParams[0]) && urlParts[4].equals(dayParams[1]) &&
                     urlParts[6].equals(dayParams[2]))) {
@@ -150,16 +154,20 @@ public class SkierServlet extends HttpServlet {
                 }
 
                 Skiers skiers = (Skiers) gson.fromJson(sb.toString(), Skiers.class);
+                skiers.setResortID(resortID);
+                skiers.setSeasonID(seasonID);
+                skiers.setDayID(dayID);
+                skiers.setSkierID(skierID);
                 out.print(gson.toJson(skiers));
 
-                // start rpc client
+                // TODO: create channel pool
                 Channel channel = conn.createChannel();
                 channel.queueDeclare(requestQueueName, false, false, false, null);
-                String message = "Skier payload " + gson.toJson(skiers);
+                String message = gson.toJson(skiers);
                 System.out.println(message);
+                System.out.println("server skierID " + skiers.getSkierID());
                 channel.basicPublish("", requestQueueName, null, message.getBytes(StandardCharsets.UTF_8));
                 channel.close();
-                System.out.println(message);
 
                 // end rpc client
 
