@@ -39,7 +39,6 @@ public class ReceiverThread implements Runnable {
                 DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                     String message = new String(delivery.getBody(), "UTF-8");
                     channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-                    System.out.println("Callback thread ID = " + Thread.currentThread().getId() + " Received '" + message + "'");
                     Skiers skiers = (Skiers) gson.fromJson(message, Skiers.class);
                     Integer skierID = skiers.getSkierID();
                     Integer liftID = skiers.getLiftID();
