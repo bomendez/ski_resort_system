@@ -1,5 +1,3 @@
-package Assignment2;
-
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
@@ -14,12 +12,12 @@ public class RecvMT {
 
     public static void main(String[] argv) throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("localhost");
-        factory.setUsername("guest");
-        factory.setPassword("guest");
-//        factory.setHost("54.68.165.222");
-//        factory.setUsername("radmin");
-//        factory.setPassword("radmin");
+//        factory.setHost("localhost");
+//        factory.setUsername("guest");
+//        factory.setPassword("guest");
+        factory.setHost("54.68.165.222");
+        factory.setUsername("radmin");
+        factory.setPassword("radmin");
 
         final Connection connection = factory.newConnection();
 

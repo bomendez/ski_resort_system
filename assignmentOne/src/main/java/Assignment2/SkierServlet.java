@@ -29,7 +29,7 @@ public class SkierServlet extends HttpServlet {
     private String dayID;
     private Integer skierID;
 
-    private String requestQueueName = "ski-rabbits";
+    private String requestQueueName = "ski-rabbit";
     private ObjectPool<Channel> pool;
 
     private boolean isUrlValid(String[] urlParts) {
