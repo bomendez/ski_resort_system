@@ -26,6 +26,7 @@ public class LatencyProcessor {
             while ((line = reader.readLine()) != null) {
                 tempArr = line.split(delimiter);
                 numRequests = tempArr.length;
+                System.out.println(numRequests);
                 for (int i=0; i<tempArr.length; i++) {
                     if ((i % 4) == 2) {
                         String latencyDataPoint = tempArr[i].replaceAll("\"", "");
@@ -52,6 +53,7 @@ public class LatencyProcessor {
         System.out.println("Digesting data. Please sit tight...");
         String file = readFile("/Users/bomendez/Documents/CS6650/assignment1/ClientPart2.csv");
         System.out.println("File read. Analyzing data...");
+        System.out.println("numRequests: " + numRequests);
         System.out.println("Mean value: "+stats.getMean());
         System.out.println("Median value: "+stats.getPercentile(50));
         throughput = numRequests/totalLatency;

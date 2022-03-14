@@ -173,9 +173,9 @@ public class MainClient2 {
         double runTimeinSeconds = totalRunTime/1000.000;
         throughputFinal = requestLog.getNumRequests()/runTimeinSeconds;
         System.out.println("Throughput: " + String.format("%.0f", throughputFinal) + " requests/second");
-//        List<ApiPerformance> apiPerformanceList = requestLog.getApiPerformanceList();
-//        StatisticsGenerator statisticsGenerator = new StatisticsGenerator(apiPerformanceList);
-//        statisticsGenerator.createCSV();
+        List<ApiPerformance> apiPerformanceList = requestLog.getApiPerformanceList();
+        StatisticsGenerator statisticsGenerator = new StatisticsGenerator(apiPerformanceList);
+        statisticsGenerator.createCSV();
     }
 
 }

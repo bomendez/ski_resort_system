@@ -66,10 +66,11 @@ public class SkierThread2 implements Runnable {
     }
 
     public void apiCall() {
+        System.out.println("api call");
         boolean isSuccessful = false;
+        ApiPerformance apiPerformance = new ApiPerformance();
+        final long startTime = System.currentTimeMillis();
         while(attempts < MAX_RETRY) {
-            ApiPerformance apiPerformance = new ApiPerformance();
-            final long startTime = System.currentTimeMillis();
             try {
                 ApiResponse response = apiInstance.writeNewLiftRideWithHttpInfo(body, resortID, seasonID, dayID, skierID);
                 if (String.valueOf(response.getStatusCode()).startsWith("2")) {
@@ -82,20 +83,22 @@ public class SkierThread2 implements Runnable {
                 System.err.println("Exception when calling SkiersApi#writeNewLiftRide");
                 e.printStackTrace();
             }
-            final long endTime = System.currentTimeMillis();
-            final long latency = endTime - startTime;
-            apiPerformance.setStartTime(startTime);
-            apiPerformance.setLatency(latency);
-            apiPerformance.setRequestType("POST");
-            if (isSuccessful) {
-                apiPerformance.setResponseCode(201);
-                numSuccesses++;
-            } else {
-                apiPerformance.setResponseCode(500);
-                numFailures++;
-            }
-            apiPerformanceList.add(apiPerformance);
         }
+        final long endTime = System.currentTimeMillis();
+        final long latency = endTime - startTime;
+        apiPerformance.setStartTime(startTime);
+        apiPerformance.setLatency(latency);
+        apiPerformance.setRequestType("POST");
+        if (isSuccessful) {
+            apiPerformance.setResponseCode(201);
+            numSuccesses++;
+        } else {
+            apiPerformance.setResponseCode(500);
+            numFailures++;
+        }
+        apiPerformanceList.add(apiPerformance);
+        System.out.println(apiPerformance);
+        System.out.println("Local list length: " + apiPerformanceList.size());
         attempts = 0;
     }
 
@@ -115,7 +118,9 @@ public class SkierThread2 implements Runnable {
         requestLog.addNumSuccessfulRequests(numSuccesses);
         requestLog.addNumUnsuccessfulRequests(numFailures);
         requestLog.addRequestCount(numRequests);
+        System.out.println("request added: " + numRequests);
         requestLog.joinApiPerformanceLists(apiPerformanceList);
+        System.out.println(apiPerformanceList.size());
         completed.countDown();
         localGlobalLatch.countDown();
     }
