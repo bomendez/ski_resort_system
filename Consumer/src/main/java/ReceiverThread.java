@@ -8,6 +8,7 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,11 +51,18 @@ public class ReceiverThread implements Runnable {
                 String seasonID = skiers.getSeasonID();
                 Integer liftID = skiers.getLiftID() * VERTICAL_CONVERSION;
 //                threadMap.put(skierID, liftID);
-                System.out.println("line 51");
-                finalRedis.hset(skierID.toString(), dayID, liftID.toString());
-                finalRedis.hset(skierID.toString(), seasonID, dayID);
-                String dayIDRedis = finalRedis.hget(skierID.toString(), dayID);
-                System.out.println(" dayID:" + dayIDRedis);
+                String skierSeasonID = skierID.toString() + ":" + seasonID.toString();
+                finalRedis.lpush(skierSeasonID, dayID);
+                List<String> dayList = finalRedis.lrange(skierSeasonID, 0, -1);
+                System.out.println("dayList " + dayList);
+                finalRedis.lpush(skierID.toString(), liftID.toString());
+                List<String> liftIDList = finalRedis.lrange(skierID.toString(), 0, -1);
+                Integer verticalTotal = liftID * 10;
+                String skierDayID = skierID.toString() + ":" + dayID.toString();
+                finalRedis.lpush(skierDayID, verticalTotal.toString());
+                List<String> verticalList = finalRedis.lrange(skierDayID, 0, -1);
+                System.out.println("skier: " + skierID.toString() + verticalList);
+
             };
             // process messages
             channel.basicConsume(queue_name, false, deliverCallback, consumerTag -> {
