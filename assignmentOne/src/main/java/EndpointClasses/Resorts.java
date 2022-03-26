@@ -4,6 +4,7 @@ public class Resorts {
     private int resortID;
     private int seasonID;
     private int dayID;
+    private int year;
 
     public Resorts() {
     }
@@ -31,4 +32,8 @@ public class Resorts {
     public void setDayID(int dayID) {
         this.dayID = dayID;
     }
+
+    public int getYear() { return this.year; }
+
+    public void setYear(int year) { this.year = year; }
 }
