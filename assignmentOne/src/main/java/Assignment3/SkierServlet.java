@@ -26,6 +26,7 @@ public class SkierServlet extends HttpServlet {
     private String dayID;
     private Integer skierID;
 
+    private String EXCHANGE_NAME = "skier";
     private String requestQueueName = "ski-rabbit";
     private ObjectPool<Channel> pool;
 
@@ -152,11 +153,13 @@ public class SkierServlet extends HttpServlet {
                 // send message to rabbitmq
                 Channel channel = null;
                 channel = pool.borrowObject();
-                channel.queueDeclare(requestQueueName, false, false, false, null);
+                channel.exchangeDeclare(EXCHANGE_NAME, "fanout");
+//                channel.queueDeclare(requestQueueName, false, false, false, null);
                 String message = gson.toJson(skiers);
                 System.out.println(message);
                 System.out.println("server skierID " + skiers.getSkierID());
-                channel.basicPublish("", requestQueueName, null, message.getBytes(StandardCharsets.UTF_8));
+                channel.basicPublish(EXCHANGE_NAME, "", null, message.getBytes(StandardCharsets.UTF_8));
+//                channel.basicPublish("", requestQueueName, null, message.getBytes(StandardCharsets.UTF_8));
 //                channel.close();
                 pool.returnObject(channel);
                 // end channel pool

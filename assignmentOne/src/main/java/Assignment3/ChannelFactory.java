@@ -17,12 +17,12 @@ public class ChannelFactory extends BasePooledObjectFactory<Channel>{
     @Override
     public Channel create() throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
-//        factory.setHost("localhost");
-//        factory.setUsername("guest");
-//        factory.setPassword("guest");
-        factory.setHost("54.68.165.222");
-        factory.setUsername("radmin");
-        factory.setPassword("radmin");
+        factory.setHost("localhost");
+        factory.setUsername("guest");
+        factory.setPassword("guest");
+//        factory.setHost("54.68.165.222");
+//        factory.setUsername("radmin");
+//        factory.setPassword("radmin");
         try {
             conn = factory.newConnection();
         } catch (IOException e) {

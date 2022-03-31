@@ -13,6 +13,7 @@ public class MainClient {
     public static int numLifts = 40;
     public static int numRuns = 10;
     public static String ipAddress;
+//    public static String ipAddress = "http://NetworkSkier-6cf333878e227fa1.elb.us-west-2.amazonaws.com/assignment1_war/";
     public final static int startDayPhase1 = 0;
     public final static int endDayPhase1 = 90;
     public final static int startDayPhase2 = 91;
@@ -86,6 +87,7 @@ public class MainClient {
      */
     public static void main(String[] args) throws InterruptedException{
         processArgs(args);
+        System.out.println("ip address: " + ipAddress);
         ApiClient apiClient = new ApiClient();
         apiClient.setBasePath(ipAddress);
 
