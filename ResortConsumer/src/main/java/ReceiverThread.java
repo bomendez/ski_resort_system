@@ -18,7 +18,7 @@ public class ReceiverThread implements Runnable {
     private ConnectionFactory factory;
     private Connection connection;
     private String EXCHANGE_NAME;
-    private String QUEUE_NAME = "skiers";
+    private String QUEUE_NAME = "resort";
     private Map<Integer, Integer> threadMap;
     private Gson gson = new Gson();
     private JedisPool pool;
@@ -39,7 +39,6 @@ public class ReceiverThread implements Runnable {
             final Channel channel = connection.createChannel();
             channel.queueDeclare(QUEUE_NAME, false, false, false, null);
             channel.exchangeDeclare(EXCHANGE_NAME, "fanout");
-//            String queueName = channel.queueDeclare().getQueue();
             channel.queueBind(QUEUE_NAME, EXCHANGE_NAME, "");
             System.out.println(" [*] Thread waiting for messages. To exit press CTRL+C");
             redis = pool.getResource();
@@ -54,25 +53,24 @@ public class ReceiverThread implements Runnable {
                 System.out.println("gson parsed " +skiers.getSkierID().toString());
                 Integer skierID = skiers.getSkierID();
                 String dayID = skiers.getDayID();
-                String seasonID = skiers.getSeasonID();
-                Integer liftID = skiers.getLiftID() * VERTICAL_CONVERSION;
+                String time = skiers.getTime();
+                Integer resortID = skiers.getResortID();
+                Integer liftID = skiers.getLiftID();
 
                 // write to DB
-                String skierSeasonID = "Skier" + skierID.toString() + ":" + seasonID.toString();
-                finalRedis.sadd(skierSeasonID, dayID);
-                String skierVertDayID = "SkierVert" + skierID.toString() + ":" + dayID;
-                Integer verticalTotal = liftID * 10;
-                finalRedis.incrBy(skierVertDayID, verticalTotal);
-                String skierLift = "SkierLift" + skierID.toString();
-                finalRedis.lpush(skierLift, liftID.toString());
+                String resortDay = "ResortDay" + resortID.toString() + ":" + dayID;
+                finalRedis.sadd(resortDay, skierID.toString());
+                String liftDay = "LiftDay" + liftID.toString() + ":" + dayID;
+                finalRedis.incr(liftDay);
+                String dayHour = "DayHour" + dayID + ":" + time;
+                finalRedis.incr(dayHour);
                 // retrieve from DB
-//                Set<String> daySet = finalRedis.smembers(skierSeasonID);
-//                System.out.println("daySett " + daySet);
-//                String skierVert = finalRedis.get(skierVertDayID);
-//                System.out.println("vertCount " + skierVert);
-//                List<String> liftList = finalRedis.lrange(skierLift, 0, -1);
-//                System.out.println("skier: " + skierID.toString() + liftList);
-
+//                Set<String> dayList = finalRedis.smembers(resortDay);
+//                System.out.println("dayList " + dayList);
+//                String liftDayCount = finalRedis.get(liftDay);
+//                System.out.println("liftDay Count " + liftDayCount);
+//                String dayHourCount = finalRedis.get(dayHour);
+//                System.out.println("dayHourCount " + dayHourCount);
             };
             // process messages
             channel.basicConsume(QUEUE_NAME, false, deliverCallback, consumerTag -> {

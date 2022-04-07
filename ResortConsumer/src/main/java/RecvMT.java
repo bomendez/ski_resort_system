@@ -1,18 +1,19 @@
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-
-import java.util.Map;
-import java.util.concurrent.*;
-
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.Protocol;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class RecvMT {
     private static String EXCHANGE_NAME = "skier";
     private final static String QUEUE_NAME = "ski-rabbit";
     private final static int NUM_THREADS = 64;
-    private final static String REDIS_IP = "35.166.146.11";
+    private final static String REDIS_IP = "54.189.41.117";
 
     private final static String rabbitMQIP = "54.188.119.38";
     private static Map<Integer, Integer> map = new ConcurrentHashMap(20000);
